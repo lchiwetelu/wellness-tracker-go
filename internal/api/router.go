@@ -34,9 +34,9 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 		{
 			checkins.GET("", checkinHandler.List)
 			checkins.POST("", checkinHandler.Create)
-			checkins.GET("/:id", checkinHandler.Get)
 			checkins.PATCH("/:id", checkinHandler.Update)
 			checkins.DELETE("/:id", checkinHandler.Delete)
+			checkins.GET("/forToday", checkinHandler.GetByUserAndDate) //?userId=1&date=2026-02-22(YYYY-MM-DD)
 		}
 	}
 
@@ -190,4 +190,3 @@ func openAPISpec() gin.H {
 		},
 	}
 }
-

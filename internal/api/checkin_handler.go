@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -36,14 +37,30 @@ type updateCheckinRequest struct {
 	Note            *string  `json:"note"`
 }
 
+type getByUserAndDateRequest struct {
+	UserID uint   `form:"userId" binding:"required"`
+	Date   string `form:"date" binding:"required"`
+}
+
+type listCheckinRequest struct {
+	UserID uint `form:"userId" binding:"required"`
+}
+
 // List returns a paginated list of check-ins.
 func (h *CheckinHandler) List(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	var req listCheckinRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		respondError(c, http.StatusBadRequest, "userId is required")
+		return
+	}
 
 	page, pageSize := parsePagination(c, 1, 20, 100)
 	var checkins []models.Checkin
 
 	tx := h.db.WithContext(ctx).
+		Where("user_id = ?", req.UserID).
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset((page - 1) * pageSize)
@@ -63,18 +80,29 @@ func (h *CheckinHandler) List(c *gin.Context) {
 	})
 }
 
-// Get returns a single check-in by ID.
-func (h *CheckinHandler) Get(c *gin.Context) {
+func (h *CheckinHandler) GetByUserAndDate(c *gin.Context) {
 	ctx := c.Request.Context()
-	id, ok := parseIDParam(c)
-	if !ok {
+
+	var req getByUserAndDateRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		respondError(c, http.StatusBadRequest, "userId and date are required")
+		return
+	}
+
+	// Validate date format
+	if _, err := time.Parse("2006-01-02", req.Date); err != nil {
+		respondError(c, http.StatusBadRequest, "date must be in YYYY-MM-DD format")
 		return
 	}
 
 	var checkin models.Checkin
-	if err := h.db.WithContext(ctx).First(&checkin, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			respondError(c, http.StatusNotFound, "check-in not found")
+	err := h.db.WithContext(ctx).
+		Where("user_id = ? AND DATE(created_at) = ?", req.UserID, req.Date).
+		First(&checkin).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			respondError(c, http.StatusNotFound, "no check-in found for this user on this date")
 			return
 		}
 		respondError(c, http.StatusInternalServerError, "failed to load check-in")
