@@ -45,5 +45,7 @@ func New(dsn string) (*gorm.DB, error) {
 
 // AutoMigrate runs database migrations for all models.
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(&models.Checkin{})
+	// db.Exec("TRUNCATE TABLE checkins RESTART IDENTITY CASCADE;")
+	// return nil
+	return db.AutoMigrate(&models.Checkin{}, &models.User{})
 }

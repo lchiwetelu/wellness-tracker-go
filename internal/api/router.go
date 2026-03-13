@@ -27,6 +27,7 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 	})
 
 	checkinHandler := NewCheckinHandler(db)
+	authHandler := NewAuthHandler(db)
 
 	apiV1 := router.Group("/api/v1")
 	{
@@ -37,6 +38,15 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 			checkins.PATCH("/:id", checkinHandler.Update)
 			checkins.DELETE("/:id", checkinHandler.Delete)
 			checkins.GET("/forToday", checkinHandler.GetByUserAndDate) //?userId=1&date=2026-02-22(YYYY-MM-DD)
+		}
+	}
+
+	auth := router.Group("/auth") 
+	{
+		google := auth.Group("/google")
+		{
+			google.GET("/login", authHandler.Login)
+			google.GET("/callback", authHandler.GoogleCallback)
 		}
 	}
 
