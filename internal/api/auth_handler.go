@@ -32,6 +32,30 @@ type GoogleUser struct {
 	Picture string `json:"picture"`
 }
 
+func (a *AuthHandler) Me(c *gin.Context) {
+	// Read the JWT from HttpOnly cookie
+	tokenString, err := c.Cookie("jwt")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"loggedIn": false})
+		return
+	}
+
+	claims, err := auth.ValidateJWT(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"loggedIn": false})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"loggedIn": true,
+		"user": gin.H{
+			"id":           claims.UserID,
+			"email":        claims.Email,
+			"authProvider": claims.AuthProvider,
+		},
+	})
+}
+
 func (a *AuthHandler) Login(c *gin.Context) {
 	// 1. Generate random state to prevent CSRF
 	state, _ := generateState()
@@ -108,7 +132,7 @@ func (a *AuthHandler) GoogleCallback(c *gin.Context) {
 		3600*24,     // 1 day in seconds
 		"/",         // path
 		"localhost", // domain (change to your frontend domain in production)
-		true,        // secure (HTTPS only in production)
+		false,       // secure (HTTPS only in production)
 		true,        // HttpOnly
 	)
 

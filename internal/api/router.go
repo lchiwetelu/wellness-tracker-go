@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"wellness_tracker/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -32,6 +33,7 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 	apiV1 := router.Group("/api/v1")
 	{
 		checkins := apiV1.Group("/checkins")
+		checkins.Use(middleware.AuthMiddleware())
 		{
 			checkins.GET("", checkinHandler.List)
 			checkins.POST("", checkinHandler.Create)
@@ -41,8 +43,9 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 		}
 	}
 
-	auth := router.Group("/auth") 
+	auth := router.Group("/auth")
 	{
+		auth.GET("/me", authHandler.Me)
 		google := auth.Group("/google")
 		{
 			google.GET("/login", authHandler.Login)

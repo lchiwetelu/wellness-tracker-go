@@ -35,3 +35,29 @@ func GenerateJWT(userID uint, email, authProvider string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
 }
+
+func ValidateJWT(tokenString string) (*JWTClaims, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "dev-secret" // must match GenerateJWT fallback
+	}
+
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Ensure correct signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok || !token.Valid {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return claims, nil
+}
