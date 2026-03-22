@@ -11,6 +11,7 @@ import (
 	"wellness_tracker/config"
 	"wellness_tracker/internal/api"
 	"wellness_tracker/internal/database"
+
 )
 
 func main() {
@@ -57,4 +58,3 @@ func main() {
 
 	log.Println("server exited cleanly")
 }
-

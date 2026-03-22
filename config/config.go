@@ -15,6 +15,7 @@ type Config struct {
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	ShutdownTimeout time.Duration
+	FrontendUrl     string
 }
 
 // Load reads configuration from environment variables, optionally loading them
@@ -31,6 +32,7 @@ func Load() *Config {
 		ReadTimeout:     getEnvDuration("HTTP_READ_TIMEOUT", 5*time.Second),
 		WriteTimeout:    getEnvDuration("HTTP_WRITE_TIMEOUT", 10*time.Second),
 		ShutdownTimeout: getEnvDuration("HTTP_SHUTDOWN_TIMEOUT", 10*time.Second),
+		FrontendUrl:     getEnv("FRONTEND_URL", "frontend"),
 	}
 }
 
@@ -60,4 +62,3 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 	}
 	return fallback
 }
-

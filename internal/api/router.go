@@ -2,8 +2,11 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"time"
 	"wellness_tracker/internal/middleware"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -14,6 +17,15 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 
 	// Basic middleware: logging + panic recovery.
 	router.Use(gin.Logger(), gin.Recovery())
+
+	frontendUrl := os.Getenv("FRONTEND_URL")
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{frontendUrl},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true, // ✅ must be true for cookies
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Health check endpoint for uptime/load balancers.
 	router.GET("/health", func(c *gin.Context) {
